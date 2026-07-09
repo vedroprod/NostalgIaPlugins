@@ -3,7 +3,7 @@
 __PocketMine Plugin__
 name=PlayerStatistic
 description=Statictic players ingame time
-version=0.6.1q_ghb
+version=0.7vdrprd
 author=ArkQuark
 class=PlayerStats
 apiversion=12.1
