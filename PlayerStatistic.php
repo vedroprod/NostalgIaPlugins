@@ -78,11 +78,14 @@ class PlayerStats implements Plugin{
 	public function updateConfig(Player $player){
 		$cfg = $this->api->plugin->readYAML($this->api->plugin->configPath($this). "times.yml");
 		$username = strtolower($player->username);
+		if(!isset($cfg[$username])){
+			$cfg[$username] = 0;
+		}
 		++$cfg[$username];
 		$this->api->plugin->writeYAML($this->api->plugin->configPath($this)."times.yml", $cfg);
 	}
 	
-	private function formatTime(&$m){
+	private function formatTime($m){
 		$time = "";
 		if($m == 0){
 			$time = "0 minutes";
@@ -111,13 +114,19 @@ class PlayerStats implements Plugin{
 		$output = '';
 		switch($cmd){
 			case 'mytime':
-				switch($args[0]){
+				$subCommand = isset($args[0]) ? strtolower($args[0]) : "";
+				switch($subCommand){
 					case "help":
 						$output .= "/mytime top - Players ingame time top\n/mytime see <nickname> - See player's ingame time\n/mytime - Your ingame time";
 						break;
 					case "top":
 						$top = $this->top();
-						for($i = 0; $i < 5; $i++){
+						$limit = min(5, count($top));
+						if($limit === 0){
+							$output .= "No players in statistic.";
+							break;
+						}
+						for($i = 0; $i < $limit; $i++){
 							foreach($top[$i] as $username => $time){
 								$pTime = $this->formatTime($time);
 								$output .= "[№".($i+1)."] ".$username." (".$pTime.")\n";
@@ -125,11 +134,11 @@ class PlayerStats implements Plugin{
 						}
 						break;
 					case "see":
-						$username = strtolower($args[1]);
-						if($username == ""){
+						if(!isset($args[1]) || trim($args[1]) === ""){
 							$output .= "Usage: /mytime see <nickname>";
 							break;
 						}
+						$username = strtolower($args[1]);
 						$cfg = $this->api->plugin->readYAML($this->api->plugin->configPath($this). "times.yml");
 						if(!isset($cfg[$username])){
 							$output .= "This Player doesn't exist!";
@@ -146,8 +155,16 @@ class PlayerStats implements Plugin{
 							break;
 						}
 						$cfg = $this->api->plugin->readYAML($this->api->plugin->configPath($this). "times.yml");
-						$time = $this->formatTime($cfg[strtolower($issuer->username)]);
+						$username = strtolower($issuer->username);
+						if(!isset($cfg[$username])){
+							$cfg[$username] = 0;
+							$this->api->plugin->writeYAML($this->api->plugin->configPath($this)."times.yml", $cfg);
+						}
+						$time = $this->formatTime($cfg[$username]);
 						$output .= "Your ingame time: ".$time;
+						break;
+					default:
+						$output .= "/mytime top - Players ingame time top\n/mytime see <nickname> - See player's ingame time\n/mytime - Your ingame time";
 						break;
 				}
 		}
